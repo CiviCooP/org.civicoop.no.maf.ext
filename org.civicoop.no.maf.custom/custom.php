@@ -37,12 +37,42 @@ function custom_civicrm_install() {
 	$params['is_active'] = '0';
 	$result = civicrm_api('CustomGroup', 'create', $params);
   }
+  $gid = false;
   if (isset($result['id'])) {
+	$gid = $result['id'];
+  }
+  if ($gid) {
 	unset($params);
 	$params['version']  = 3;
-	$params['custom_group_id'] = $result['id'];
+	$params['custom_group_id'] = $gid;
 	$params['name'] = 'NO_SocialSecurityNo';
 	$params['label'] = 'Fødselsnr';
+	$params['is_active'] = '1';
+	$result = civicrm_api('CustomField', 'create', $params);
+  }
+  
+  unset($params);
+  $params['name'] = 'maf_norway_organization';
+  $result = civicrm_api('CustomGroup', 'getsingle', $params);
+  if (!isset($result['id'])) {
+	unset($params);
+	$params['version']  = 3;
+	$params['name'] = 'maf_norway_organization';
+	$params['title'] = 'MAF Norway';
+	$params['extends'] = 'Organization';
+	$params['is_active'] = '0';
+	$result = civicrm_api('CustomGroup', 'create', $params);
+  }
+  $gid = false;
+  if (isset($result['id'])) {
+	$gid = $result['id'];
+  }
+  if ($gid) {
+	unset($params);
+	$params['version']  = 3;
+	$params['custom_group_id'] = $gid;
+	$params['name'] = 'Organisasjonsnummer';
+	$params['label'] = 'Organisasjonsnummer';
 	$params['is_active'] = '1';
 	$result = civicrm_api('CustomField', 'create', $params);
   }
@@ -76,6 +106,32 @@ function custom_civicrm_uninstall() {
 	$params['id'] = $gid;
 	$result = civicrm_api('CustomGroup', 'delete', $params);
   }
+  
+  unset($params);
+  $params['version']  = 3;
+  $params['name'] = 'maf_norway_organization';
+  $result = civicrm_api('CustomGroup', 'getsingle', $params);
+  if (isset($result['id'])) {
+	$gid = $result['id'];
+	unset($params);
+	$params['version']  = 3;
+	$params['custom_group_id'] = $gid;
+	$result = civicrm_api('CustomField', 'get', $params);
+	if (isset($result['values']) && is_array($result['values'])) {
+		foreach($result['values']  as $field) {
+			unset($params);
+			$params['version']  = 3;
+			$params['id'] = $field['id'];
+			civicrm_api('CustomField', 'delete', $params);
+		}
+	}
+	
+	unset($params);
+	$params['version']  = 3;
+	$params['id'] = $gid;
+	$result = civicrm_api('CustomGroup', 'delete', $params);
+  }
+  
   return _custom_civix_civicrm_uninstall();
 }
 
@@ -94,6 +150,19 @@ function custom_civicrm_enable() {
 	$params['is_active'] = '1';
 	$result = civicrm_api('CustomGroup', 'update', $params);
   }
+  
+  unset($params);
+  $params['version']  = 3;
+  $params['name'] = 'maf_norway_organization';
+  $result = civicrm_api('CustomGroup', 'getsingle', $params);
+  if (isset($result['id'])) {
+	$gid = $result['id'];
+	unset($params);
+	$params['version']  = 3;
+	$params['id'] = $gid;
+	$params['is_active'] = '1';
+	$result = civicrm_api('CustomGroup', 'update', $params);
+  }
   return _custom_civix_civicrm_enable();
 }
 
@@ -103,6 +172,19 @@ function custom_civicrm_enable() {
 function custom_civicrm_disable() {
   $params['version']  = 3;
   $params['name'] = 'maf_norway_individual';
+  $result = civicrm_api('CustomGroup', 'getsingle', $params);
+  if (isset($result['id'])) {
+	$gid = $result['id'];
+	unset($params);
+	$params['version']  = 3;
+	$params['id'] = $gid;
+	$params['is_active'] = '0';
+	$result = civicrm_api('CustomGroup', 'update', $params);
+  }
+  
+  unset($params);
+  $params['version']  = 3;
+  $params['name'] = 'maf_norway_organization';
   $result = civicrm_api('CustomGroup', 'getsingle', $params);
   if (isset($result['id'])) {
 	$gid = $result['id'];
