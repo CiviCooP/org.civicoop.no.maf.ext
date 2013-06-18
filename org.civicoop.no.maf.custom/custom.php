@@ -47,6 +47,8 @@ function custom_civicrm_install() {
 	$params['custom_group_id'] = $gid;
 	$params['name'] = 'NO_SocialSecurityNo';
 	$params['label'] = 'Fødselsnr';
+	$params['html_type'] = 'Text';
+	$params['data_type'] = 'String';
 	$params['is_active'] = '1';
 	$result = civicrm_api('CustomField', 'create', $params);
   }
@@ -73,6 +75,8 @@ function custom_civicrm_install() {
 	$params['custom_group_id'] = $gid;
 	$params['name'] = 'Organisasjonsnummer';
 	$params['label'] = 'Organisasjonsnummer';
+	$params['html_type'] = 'Text';
+	$params['data_type'] = 'String';
 	$params['is_active'] = '1';
 	$result = civicrm_api('CustomField', 'create', $params);
   }
