@@ -38,13 +38,13 @@ function custom_civicrm_uninstall() {
 /**
  * Implementation of hook_civicrm_enable
  */
-function custom_civicrm_enable() {
+function custom_civicrm_enable() {	
 
   _custom_add_field('maf_norway_individual', 'MAF Norway', 'Individual', 'NO_SocialSecurityNo', 'Fødselsnr', 'String', 'Text', '1');
   _custom_add_field('maf_norway_organization', 'MAF Norway', 'Organization', 'Organisasjonsnummer', 'Organisasjonsnummer', 'String', 'Text', '1');
-  _custom_add_field('maf_norway_contributions', 'MAF Norway', 'Contribution', 'Aksjon ID', 'Aksjon ID', 'String', 'Text', '1');
+  /*_custom_add_field('maf_norway_contributions', 'MAF Norway', 'Contribution', 'Aksjon ID', 'Aksjon ID', 'String', 'Text', '1');
   _custom_add_field('maf_norway_original_kid', 'Original values for KID', 'Contribution', 'Aktivitet ID', 'Aktivitet ID', 'String', 'Text', '1');
-  _custom_add_field('maf_norway_original_kid', 'Original values for KID', 'Contribution', 'Orgininal contact ID', 'Orgininal contact ID', 'String', 'Text', '1');
+  _custom_add_field('maf_norway_original_kid', 'Original values for KID', 'Contribution', 'Orgininal contact ID', 'Orgininal contact ID', 'String', 'Text', '1');*/
 
   _custom_enable_group('maf_norway_individual', true);
   _custom_enable_group('maf_norway_organization', true);
