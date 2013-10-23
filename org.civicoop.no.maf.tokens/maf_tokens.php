@@ -84,7 +84,7 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 		if (in_array('today', $tokens['maf_tokens'])) {
 			$today = new DateTime();
 			foreach ($cids as $cid) {
-				$values[$cid]['maf_tokens.today'] = CRM_Utils_Date::customFormat($today->format('Y-m-d'), null,array('Y', 'm', 'd'));
+				$values[$cid]['maf_tokens.today'] = _maf_tokens_date_format($today);
 			}
 		}
 		
@@ -102,11 +102,11 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 				if (in_array($cid, $cids)) {
 					if (in_array('lastcontribution_amount', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
-						$values[$cid]['maf_tokens.lastcontribution_amount'] = CRM_Utils_Money::format($amount, null, null, true);
+						$values[$cid]['maf_tokens.lastcontribution_amount'] = _maf_tokens_money_format($amount);
 					}
 					if (in_array('lastcontribution_date', $tokens['maf_tokens'])) {
 						$date = new DateTime($dao->receive_date);
-						$values[$cid]['maf_tokens.lastcontribution_date'] = CRM_Utils_Date::customFormat($date->format('Y-m-d'), null,array('Y', 'm', 'd'));
+						$values[$cid]['maf_tokens.lastcontribution_date'] = _maf_tokens_date_format($date);
 					}
 					if (in_array('lastcontribution_financial_type', $tokens['maf_tokens'])) {
 						$values[$cid]['maf_tokens.lastcontribution_financial_type'] = $dao->financial_type;
@@ -115,4 +115,49 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 			}
 		}
 	}
+}
+
+function _maf_tokens_money_format($amount) {
+	$rep = array(
+		'.' => ',',
+		',' => ' ',
+	);
+	
+	$hasDecimals = false;
+	$rest = fmod($amount, 1);
+	if ($rest > 0.00) {
+		$hasDecimals = true;
+	}
+	if ($hasDecimals) {
+		$amount = number_format($amount, 2, '.', ',');
+	} else {
+		$amount = number_format($amount, 0, '.', ',');
+	}
+	$amount = strtr($amount, $rep);
+	return $amount;
+}
+
+function _maf_tokens_date_format($date) {
+	$months = array (
+		'1' => 'Januar',
+		'2' =>'Februar', 
+		'3' =>'Mars', 
+		'4' =>'April', 
+		'5' =>'Mai', 
+		'6' =>'Juni',
+		'7' =>'Juli',
+		'8' =>'August',
+		'9' =>'September',
+		'10' =>'Oktober',
+		'11' =>'November',
+		'12' =>'Desember',
+	);
+	
+	$month_nr = $date->format('n');
+	$month = '';
+	if (isset($months[$month_nr])) {
+		$month = $months[$month_nr];
+	}
+	$str = $date->format('j').'. '.$month.' '.$date->format('Y');
+	return $str;
 }
