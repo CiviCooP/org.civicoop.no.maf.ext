@@ -84,27 +84,29 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 		if (in_array('today', $tokens['maf_tokens'])) {
 			$today = new DateTime();
 			foreach ($cids as $cid) {
-				$values[$cid]['maf_tokens.today'] = $today->format('d-m-Y');
+				$values[$cid]['maf_tokens.today'] = CRM_Utils_Date::customFormat($today->format('Y-m-d'), null,array('Y', 'm', 'd'));
 			}
 		}
 		
 		if ((in_array('lastcontribution_amount', $tokens['maf_tokens'])) || (in_array('lastcontribution_date', $tokens['maf_tokens'])) || (in_array('lastcontribution_financial_type', $tokens['maf_tokens']))) {
 			$dao = &CRM_Core_DAO::executeQuery("
-				SELECT cc.*, MAX(cc.receive_date), ft.name as financial_type
-				FROM civicrm_contribution cc LEFT JOIN civicrm_financial_type ft ON cc.financial_type_id = ft.id
-				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
-				AND cc.contact_id IN (".$contacts.") GROUP BY cc.contact_id				
+				SELECT cc.*, ft.name as financial_type
+				FROM civicrm_contribution as cc LEFT JOIN civicrm_financial_type ft ON cc.financial_type_id = ft.id
+				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1 AND 
+				receive_date = (SELECT max(receive_date) FROM civicrm_contribution c2 WHERE c2.contact_id = cc.contact_id)
+				AND cc.contact_id IN (".$contacts.")
 			");
 			
 			while ($dao->fetch()) {
 				$cid = $dao->contact_id;
 				if (in_array($cid, $cids)) {
 					if (in_array('lastcontribution_amount', $tokens['maf_tokens'])) {
-						$values[$cid]['maf_tokens.lastcontribution_amount'] = $dao->total_amount;
+						$amount = (float) $dao->total_amount;
+						$values[$cid]['maf_tokens.lastcontribution_amount'] = CRM_Utils_Money::format($amount, null, null, true);
 					}
 					if (in_array('lastcontribution_date', $tokens['maf_tokens'])) {
 						$date = new DateTime($dao->receive_date);
-						$values[$cid]['maf_tokens.lastcontribution_date'] = $date->format('d-m-Y');
+						$values[$cid]['maf_tokens.lastcontribution_date'] = CRM_Utils_Date::customFormat($date->format('Y-m-d'), null,array('Y', 'm', 'd'));
 					}
 					if (in_array('lastcontribution_financial_type', $tokens['maf_tokens'])) {
 						$values[$cid]['maf_tokens.lastcontribution_financial_type'] = $dao->financial_type;
