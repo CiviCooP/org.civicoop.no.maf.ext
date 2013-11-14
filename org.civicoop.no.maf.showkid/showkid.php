@@ -4,11 +4,14 @@ require_once 'showkid.civix.php';
 
 function showkid_civicrm_searchColumns($objectName, &$headers,  &$values, &$selector ) {
 	if ($objectName == 'contribution') {
+		
 		foreach($headers as $hid => $header) {
 			if (isset($header['sort']) && $header['sort'] == 'product_name') {
 				$headers[$hid]['name']  = 'KID';
+				unset($headers[$hid]['sort']);
 			}
 		}
+		
 		foreach($values as $id => $value) {
 			$values[$id]['product_name'] = kid_number_lookup('Contribution', $value['contribution_id']);
 		}
