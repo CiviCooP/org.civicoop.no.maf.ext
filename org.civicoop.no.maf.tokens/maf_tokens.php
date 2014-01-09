@@ -92,8 +92,8 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 			$dao = &CRM_Core_DAO::executeQuery("
 				SELECT cc.*, ft.name as financial_type
 				FROM civicrm_contribution as cc LEFT JOIN civicrm_financial_type ft ON cc.financial_type_id = ft.id
-				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1 AND 
-				receive_date = (SELECT max(receive_date) FROM civicrm_contribution c2 WHERE c2.contact_id = cc.contact_id)
+				WHERE cc.is_test = 0 AND 
+				receive_date = (SELECT max(receive_date) FROM civicrm_contribution c2 WHERE c2.contact_id = cc.contact_id AND c2.contribution_status_id = 1)
 				AND cc.contact_id IN (".$contacts.")
 			");
 			
