@@ -77,17 +77,39 @@ function maf_tokens_civicrm_tokens(&$tokens) {
   );
 }
 
+/**
+ * implementation of hook_civicrm_tokenValues
+ * 
+ * This function deletegates the tokens to the desired functions
+ * 
+ * @param type $values
+ * @param type $cids
+ * @param type $job
+ * @param type $tokens
+ * @param type $context
+ */
 function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
 	$contacts = implode(',', $cids);
 
 	if (!empty($tokens['maf_tokens'])) {
+    //token maf_tokens.today
 		if (in_array('today', $tokens['maf_tokens'])) {
-			$today = new DateTime();
-			foreach ($cids as $cid) {
-				$values[$cid]['maf_tokens.today'] = _maf_tokens_date_format($today);
-			}
+			maf_tokens_today($values, $cids, $job, $tokens,$context);
 		}
-		
+		//tokens:
+    // - maf_tokens.lastcontribution_amount
+    // - maf_tokens.lastcontribution_date
+    // - maf_tokens.lastcontribution_financial_type
+		if ((in_array('lastcontribution_amount', $tokens['maf_tokens'])) || (in_array('lastcontribution_date', $tokens['maf_tokens'])) || (in_array('lastcontribution_financial_type', $tokens['maf_tokens']))) {
+      maf_tokens_lastcontribution($values, $cids, $job, $tokens,$context);
+		}
+	}
+}
+
+function maf_tokens_lastcontribution(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  $contacts = implode(',', $cids);
+
+	if (!empty($tokens['maf_tokens'])) {		
 		if ((in_array('lastcontribution_amount', $tokens['maf_tokens'])) || (in_array('lastcontribution_date', $tokens['maf_tokens'])) || (in_array('lastcontribution_financial_type', $tokens['maf_tokens']))) {
 			$dao = &CRM_Core_DAO::executeQuery("
 				SELECT cc.*, ft.name as financial_type
@@ -117,6 +139,27 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 	}
 }
 
+/*
+ * Returns the value of token maf_tokens.today
+ */
+function maf_tokens_today(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  if (!empty($tokens['maf_tokens'])) {
+		if (in_array('today', $tokens['maf_tokens'])) {
+			$today = new DateTime();
+			foreach ($cids as $cid) {
+				$values[$cid]['maf_tokens.today'] = _maf_tokens_date_format($today);
+			}
+		}
+  }
+}
+
+
+/**
+ * Fomat a number as NOK money format
+ * 
+ * @param type $amount
+ * @return type
+ */
 function _maf_tokens_money_format($amount) {
 	$rep = array(
 		'.' => ',',
@@ -137,6 +180,12 @@ function _maf_tokens_money_format($amount) {
 	return $amount;
 }
 
+/**
+ * Format a date to norwegian style
+ * 
+ * @param type $date
+ * @return string
+ */
 function _maf_tokens_date_format($date) {
 	$months = array (
 		'1' => 'Januar',
