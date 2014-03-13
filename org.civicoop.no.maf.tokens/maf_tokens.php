@@ -83,6 +83,12 @@ function maf_tokens_civicrm_tokens(&$tokens) {
   'maf_tokens.pronoun_dinederes' => 'Pronoun dine/deres',
   'maf_tokens.pronoun_dinederes_capital' => 'Pronoun Dine/Deres',
     
+  'maf_tokens.nextcontribution_amount_krone' => 'Next contribution (krones)',
+  'maf_tokens.nextcontribution_amount_ore' => 'Next contribution (ore)',
+  'maf_tokens.nextcontribution_month' => 'Next contribution month',
+  'maf_tokens.nextcontribution_kid15' => 'KID15 of next contribution',
+  'maf_tokens.total_contribution_amount' => 'Total amount contributed',
+  'maf_tokens.country' => 'Country (if other than Norway)',  
   );
 }
 
@@ -103,6 +109,17 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 		if (in_array('today', $tokens['maf_tokens'])) {
 			maf_tokens_today($values, $cids, $job, $tokens,$context);
 		}
+    
+    //token maf_tokens.total_contribution_amount
+		if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
+			maf_tokens_totalcontribution($values, $cids, $job, $tokens,$context);
+		}
+    
+    //token maf_tokens.country
+		if (in_array('country', $tokens['maf_tokens'])) {
+			maf_tokens_country($values, $cids, $job, $tokens,$context);
+		}
+    
 		//tokens:
     // - maf_tokens.lastcontribution_amount
     // - maf_tokens.lastcontribution_date
@@ -110,6 +127,10 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 		if ((in_array('lastcontribution_amount', $tokens['maf_tokens'])) || (in_array('lastcontribution_date', $tokens['maf_tokens'])) || (in_array('lastcontribution_financial_type', $tokens['maf_tokens']))) {
       maf_tokens_lastcontribution($values, $cids, $job, $tokens,$context);
 		}
+    
+    if ((in_array('nextcontribution_kid15', $tokens['maf_tokens'])) || (in_array('nextcontribution_amount_krone', $tokens['maf_tokens'])) || (in_array('nextcontribution_amount_ore', $tokens['maf_tokens'])) || (in_array('nextcontribution_month', $tokens['maf_tokens']))) {
+      maf_tokens_nextcontribution($values, $cids, $job, $tokens,$context);
+    }
     
     //pronoun tokens
     //
@@ -130,6 +151,28 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
       maf_tokens_pronouns($values, $cids, $job, $tokens,$context);
     }
 	}
+}
+
+
+//returns the name of the country or empty when the country is norway
+function maf_tokens_country(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  $contacts = implode(',', $cids);
+  if (in_array('country', $tokens['maf_tokens'])) {
+    $dao = CRM_Core_DAO::executeQuery("SELECT c.*, `a`.`contact_id` FROM `civicrm_address` `a` 
+         LEFT JOIN `civicrm_country` `c` ON  `a`.`country_id` = `c`.`id`
+         WHERE `is_primary` = '1' AND `contact_id` IN (".$contacts.");");
+    while ($dao->fetch()) {
+        $cid = $dao->contact_id;
+				if (in_array($cid, $cids)) {
+          if ($dao->id == "1161") {
+            //norway
+              $values[$cid]['maf_tokens.country'] = "";
+          } else {
+            $values[$cid]['maf_tokens.country'] = $dao->name;
+          }
+        }
+    }
+  }
 }
 
 function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $context = null) {
@@ -206,6 +249,80 @@ function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $c
     }
 }
 
+/*
+ * Returns the value of tokens:
+ * - maf_tokens.total_contribution_amount
+ */
+function maf_tokens_totalcontribution(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  $contacts = implode(',', $cids);
+
+	if (!empty($tokens['maf_tokens'])) {		
+		if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
+			$dao = &CRM_Core_DAO::executeQuery("
+				SELECT cc.*, SUM(cc.total_amount) as total_amount
+				FROM civicrm_contribution as cc
+				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
+				AND cc.contact_id IN (".$contacts.")
+        GROUP BY cc.contact_id
+			");
+			
+			while ($dao->fetch()) {
+				$cid = $dao->contact_id;
+				if (in_array($cid, $cids)) {
+					if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
+						$amount = (float) $dao->total_amount;
+						$values[$cid]['maf_tokens.total_contribution_amount'] = _maf_tokens_money_format($amount);
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Returns the value of tokens:
+ * - maf_tokens.nextcontribution_amount_krone
+ * - maf_tokens.nextcontribution_amount_ore
+ * - maf_tokens.nextcontribution_month
+ */
+function maf_tokens_nextcontribution(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  $contacts = implode(',', $cids);
+
+	if (!empty($tokens['maf_tokens'])) {		
+		if ( (in_array('nextcontribution_kid15', $tokens['maf_tokens'])) || (in_array('nextcontribution_amount_krone', $tokens['maf_tokens'])) || (in_array('nextcontribution_amount_ore', $tokens['maf_tokens'])) || (in_array('nextcontribution_month', $tokens['maf_tokens']))) {
+			$dao = &CRM_Core_DAO::executeQuery("
+				SELECT cc.*, `kid`.`kid_number`
+				FROM civicrm_contribution as cc 
+        LEFT JOIN `civicrm_kid_number` `kid` ON (`kid`.`entity` = 'Contribution' AND `cc`.`id` = `kid`.`entity_id`)
+				WHERE cc.is_test = 0 AND 
+				receive_date = (SELECT min(receive_date) FROM civicrm_contribution c2 WHERE c2.contact_id = cc.contact_id AND c2.contribution_status_id = 2)
+				AND cc.contact_id IN (".$contacts.")
+			");
+			
+			while ($dao->fetch()) {
+				$cid = $dao->contact_id;
+				if (in_array($cid, $cids)) {
+          if (in_array('nextcontribution_kid15', $tokens['maf_tokens'])) {
+						$values[$cid]['maf_tokens.nextcontribution_kid15'] = $dao->kid_number;
+					}
+					if (in_array('nextcontribution_amount_krone', $tokens['maf_tokens'])) {
+						$amount = (float) $dao->total_amount;
+						$values[$cid]['maf_tokens.nextcontribution_amount_krone'] = _maf_tokens_moneykrone_format($amount);
+					}
+          if (in_array('nextcontribution_amount_ore', $tokens['maf_tokens'])) {
+						$amount = (float) $dao->total_amount;
+						$values[$cid]['maf_tokens.nextcontribution_amount_ore'] = _maf_tokens_moneyore_format($amount);
+					}
+					if (in_array('nextcontribution_month', $tokens['maf_tokens'])) {
+						$date = new DateTime($dao->receive_date);
+						$values[$cid]['maf_tokens.nextcontribution_month'] = _maf_tokens_month_format($date);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 /*
  * Returns the value of tokens:
@@ -279,12 +396,44 @@ function _maf_tokens_money_format($amount) {
 		$hasDecimals = true;
 	}
 	if ($hasDecimals) {
-		$amount = number_format($amount, 2, '.', ',');
+		$value = number_format($amount, 2, '.', ',');
 	} else {
-		$amount = number_format($amount, 0, '.', ',');
+		$value = number_format($amount, 0, '.', ',');
 	}
-	$amount = strtr($amount, $rep);
-	return $amount;
+	$value = strtr($value, $rep);
+	return $value;
+}
+
+/**
+ * Fomat a number as NOK money format
+ * 
+ * @param type $amount
+ * @return type
+ */
+function _maf_tokens_moneykrone_format($amount) {
+	$rep = array(
+		'.' => ',',
+		',' => ' ',
+	);
+	
+  $value = (int) $amount;
+	return $value;
+}
+
+function _maf_tokens_moneyore_format($amount) {
+	$rep = array(
+		'.' => ',',
+		',' => ' ',
+	);
+	$rest = fmod($amount, 1);
+	if ($rest > 0.00) {
+    $rest = $rest * 100;
+    $value = number_format($rest, 0, '.', ',');
+	} else {
+    $value = '0';
+  }
+	$value = strtr($value, $rep);
+	return $value;
 }
 
 /**
@@ -294,6 +443,18 @@ function _maf_tokens_money_format($amount) {
  * @return string
  */
 function _maf_tokens_date_format($date) {
+	$month = _maf_tokens_month_format($date);
+	$str = $date->format('j').'. '.$month.' '.$date->format('Y');
+	return $str;
+}
+
+/**
+ * Format a month to norwegian style
+ * 
+ * @param type $date
+ * @return string
+ */
+function _maf_tokens_month_format($date) {
 	$months = array (
 		'1' => 'Januar',
 		'2' =>'Februar', 
@@ -314,6 +475,5 @@ function _maf_tokens_date_format($date) {
 	if (isset($months[$month_nr])) {
 		$month = $months[$month_nr];
 	}
-	$str = $date->format('j').'. '.$month.' '.$date->format('Y');
-	return $str;
+	return $month;
 }
