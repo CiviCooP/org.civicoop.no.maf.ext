@@ -70,10 +70,19 @@ function maf_tokens_civicrm_managed(&$entities) {
 
 function maf_tokens_civicrm_tokens(&$tokens) {
   $tokens['maf_tokens'] = array(
-    'maf_tokens.today' => 'Todays date',
+  'maf_tokens.today' => 'Todays date',
 	'maf_tokens.lastcontribution_amount' => 'Amount of last contribution',
 	'maf_tokens.lastcontribution_date' => 'Date of last contribution',
 	'maf_tokens.lastcontribution_financial_type' => 'Financial type of last contribution',
+  'maf_tokens.pronoun_dudere' => 'Pronoun du/dere',
+  'maf_tokens.pronoun_dudere_capital' => 'Pronoun Du/Dere',
+  'maf_tokens.pronoun_degdere' => 'Pronoun deg/dere',
+  'maf_tokens.pronoun_degdere_capital' => 'Pronoun Deg/Dere',
+  'maf_tokens.pronoun_dinderes' => 'Pronoun din/deres',
+  'maf_tokens.pronoun_dinderes_capital' => 'Pronoun Din/Deres',
+  'maf_tokens.pronoun_dinederes' => 'Pronoun dine/deres',
+  'maf_tokens.pronoun_dinederes_capital' => 'Pronoun Dine/Deres',
+    
   );
 }
 
@@ -89,9 +98,7 @@ function maf_tokens_civicrm_tokens(&$tokens) {
  * @param type $context
  */
 function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
-	$contacts = implode(',', $cids);
-
-	if (!empty($tokens['maf_tokens'])) {
+  if (!empty($tokens['maf_tokens'])) {
     //token maf_tokens.today
 		if (in_array('today', $tokens['maf_tokens'])) {
 			maf_tokens_today($values, $cids, $job, $tokens,$context);
@@ -103,9 +110,109 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
 		if ((in_array('lastcontribution_amount', $tokens['maf_tokens'])) || (in_array('lastcontribution_date', $tokens['maf_tokens'])) || (in_array('lastcontribution_financial_type', $tokens['maf_tokens']))) {
       maf_tokens_lastcontribution($values, $cids, $job, $tokens,$context);
 		}
+    
+    //pronoun tokens
+    //
+    // We want to say things like this:
+    // «Thanks for your support, Jaap» or «Thanks for your support, Jaap and Erik»
+    // In Nowegian that would be:
+    // «Takk for din støtte, Jaap» eller «Takk for deres støtte, Jaap og Erik»
+    // (And we want to use the different personal pronouns MANY times in the same letter)
+    if (in_array('pronoun_dudere', $tokens['maf_tokens']) ||
+        in_array('pronoun_dudere_capital', $tokens['maf_tokens']) ||
+        in_array('pronoun_degdere', $tokens['maf_tokens']) ||
+        in_array('pronoun_degdere_capital', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinderes', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinderes_capital', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinederes', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])
+        ) {
+      maf_tokens_pronouns($values, $cids, $job, $tokens,$context);
+    }
 	}
 }
 
+function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  	$contacts = implode(',', $cids);
+    if (in_array('pronoun_dudere', $tokens['maf_tokens']) ||
+        in_array('pronoun_dudere_capital', $tokens['maf_tokens']) ||
+        in_array('pronoun_degdere', $tokens['maf_tokens']) ||
+        in_array('pronoun_degdere_capital', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinderes', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinderes_capital', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinederes', $tokens['maf_tokens']) ||
+        in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])
+        ) {
+      
+      
+      $dao = CRM_Core_DAO::executeQuery("SELECT * FROM `civicrm_contact` WHERE `id` IN (".$contacts.");");
+      while ($dao->fetch()) {
+        $cid = $dao->id;
+				if (in_array($cid, $cids)) {
+          if ($dao->contact_type == "Individual") {
+            if (in_array('pronoun_dudere', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dudere'] = "du";
+            }
+            if (in_array('pronoun_dudere_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Du";
+            }            
+            if (in_array('pronoun_degdere', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_degdere'] = "deg";
+            }
+            if (in_array('pronoun_degdere_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_degdere_capital'] = "Deg";
+            }
+            if (in_array('pronoun_dinderes', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dinderes'] = "din";
+            }
+            if (in_array('pronoun_dinderes_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dinderes_capital'] = "Din";
+            }
+            if (in_array('pronoun_dinederes', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dinederes'] = "dine";
+            }
+            if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Dine";
+            }
+            
+          } else {
+            if (in_array('pronoun_dudere', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dudere'] = "dere";
+            }
+            if (in_array('pronoun_dudere_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Dere";
+            }
+            if (in_array('pronoun_degdere', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_degdere'] = "dere";
+            }
+            if (in_array('pronoun_degdere_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_degdere_capital'] = "Dere";
+            }
+            if (in_array('pronoun_dinderes', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dinderes'] = "deres";
+            }
+            if (in_array('pronoun_dinderes_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dinderes_capital'] = "Deres";
+            }
+            if (in_array('pronoun_dinederes', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dinederes'] = "deres";
+            }
+            if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
+              $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Deres";
+            }
+          }
+        }
+      }
+    }
+}
+
+
+/*
+ * Returns the value of tokens:
+ * - maf_tokens.lastcontribution_amount
+ * - maf_tokens.lastcontribution_date
+ * - maf_tokens.lastcontribution_financial_type
+ */
 function maf_tokens_lastcontribution(&$values, $cids, $job = null, $tokens = array(), $context = null) {
   $contacts = implode(',', $cids);
 
