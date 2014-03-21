@@ -433,6 +433,9 @@ function _maf_tokens_moneyore_format($amount) {
     $value = '0';
   }
 	$value = strtr($value, $rep);
+  if (strlen($value) < 2) {
+    $value .= "0".$value;
+  }
 	return $value;
 }
 
