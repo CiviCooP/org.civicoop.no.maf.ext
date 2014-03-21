@@ -432,10 +432,13 @@ function _maf_tokens_moneyore_format($amount) {
 	} else {
     $value = '0';
   }
+  var_dump($value);
 	$value = strtr($value, $rep);
+  var_dump($value);
   if (strlen($value) < 2) {
-    $value .= "0".$value;
+    $value = "0".$value;
   }
+  var_dump($value); exit();
 	return $value;
 }
 
