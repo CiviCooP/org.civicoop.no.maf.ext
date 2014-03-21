@@ -215,7 +215,7 @@ function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $c
               $values[$cid]['maf_tokens.pronoun_dinederes'] = "dine";
             }
             if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
-              $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Dine";
+              $values[$cid]['maf_tokens.pronoun_dinederes_capital'] = "Dine";
             }
             
           } else {
@@ -241,7 +241,7 @@ function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $c
               $values[$cid]['maf_tokens.pronoun_dinederes'] = "deres";
             }
             if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
-              $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Deres";
+              $values[$cid]['maf_tokens.pronoun_dinederes_capital'] = "Deres";
             }
           }
         }
