@@ -295,7 +295,7 @@ function maf_tokens_nextcontribution(&$values, $cids, $job = null, $tokens = arr
 				FROM civicrm_contribution as cc 
         LEFT JOIN `civicrm_kid_number` `kid` ON (`kid`.`entity` = 'Contribution' AND `cc`.`id` = `kid`.`entity_id`)
 				WHERE cc.is_test = 0 AND 
-				receive_date = (SELECT min(receive_date) FROM civicrm_contribution c2 WHERE c2.contact_id = cc.contact_id AND c2.contribution_status_id = 2)
+				receive_date = (SELECT min(receive_date) FROM civicrm_contribution c2 WHERE c2.receive_date >= CURDATE() AND c2.contact_id = cc.contact_id AND c2.contribution_status_id = 2)
 				AND cc.contact_id IN (".$contacts.")
 			");
 			
