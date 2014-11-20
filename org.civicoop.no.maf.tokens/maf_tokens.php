@@ -88,6 +88,7 @@ function maf_tokens_civicrm_tokens(&$tokens) {
   'maf_tokens.nextcontribution_month' => 'Next contribution month',
   'maf_tokens.nextcontribution_kid15' => 'KID15 of next contribution',
   'maf_tokens.total_contribution_amount' => 'Total amount contributed',
+  'maf_tokens.total_this_year_contribution_amount' => 'Total amount contributed (this year)',
   'maf_tokens.country' => 'Country (if other than Norway)',  
   );
 }
@@ -113,6 +114,9 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
     //token maf_tokens.total_contribution_amount
 		if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
 			maf_tokens_totalcontribution($values, $cids, $job, $tokens,$context);
+		}
+    if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
+			maf_tokens_total_this_year_contribution($values, $cids, $job, $tokens,$context);
 		}
     
     //token maf_tokens.country
@@ -272,6 +276,37 @@ function maf_tokens_totalcontribution(&$values, $cids, $job = null, $tokens = ar
 					if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
 						$values[$cid]['maf_tokens.total_contribution_amount'] = _maf_tokens_money_format($amount);
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Returns the value of tokens:
+ * - maf_tokens.total_contribution_amount
+ */
+function maf_tokens_total_this_year_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  $contacts = implode(',', $cids);
+
+	if (!empty($tokens['maf_tokens'])) {		
+		if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
+			$dao = &CRM_Core_DAO::executeQuery("
+				SELECT cc.*, SUM(cc.total_amount) as total_amount
+				FROM civicrm_contribution as cc
+				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
+				AND cc.contact_id IN (".$contacts.")
+        AND YEAR(cc.receive_date) = YEAR(now())
+        GROUP BY cc.contact_id
+			");
+			
+			while ($dao->fetch()) {
+				$cid = $dao->contact_id;
+				if (in_array($cid, $cids)) {
+					if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
+						$amount = (float) $dao->total_amount;
+						$values[$cid]['maf_tokens.total_this_year_contribution_amount'] = _maf_tokens_money_format($amount);
 					}
 				}
 			}
