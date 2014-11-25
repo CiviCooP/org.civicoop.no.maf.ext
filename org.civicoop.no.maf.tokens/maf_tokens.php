@@ -89,6 +89,9 @@ function maf_tokens_civicrm_tokens(&$tokens) {
   'maf_tokens.nextcontribution_kid15' => 'KID15 of next contribution',
   'maf_tokens.total_contribution_amount' => 'Total amount contributed',
   'maf_tokens.total_this_year_contribution_amount' => 'Total amount contributed (this year)',
+  'maf_tokens.total_last_year_contribution_amount' => 'Total amount contributed (last year)',
+  'maf_tokens.total_this_year_contribution_deductible_amount' => 'Total deductible amount contributed (this year)',
+  'maf_tokens.total_last_year_contribution_deductible_amount' => 'Total deductible amount contributed (last year)',
   'maf_tokens.country' => 'Country (if other than Norway)',  
   );
 }
@@ -107,20 +110,29 @@ function maf_tokens_civicrm_tokens(&$tokens) {
 function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
   if (!empty($tokens['maf_tokens'])) {
     //token maf_tokens.today
-		if (in_array('today', $tokens['maf_tokens'])) {
+		if (in_array('today', $tokens['maf_tokens']) || array_key_exists('today', $tokens['maf_tokens'])) {
 			maf_tokens_today($values, $cids, $job, $tokens,$context);
 		}
     
     //token maf_tokens.total_contribution_amount
-		if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
+		if (in_array('total_contribution_amount', $tokens['maf_tokens']) || array_key_exists('total_contribution_amount', $tokens['maf_tokens'])) {
 			maf_tokens_totalcontribution($values, $cids, $job, $tokens,$context);
 		}
-    if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
-			maf_tokens_total_this_year_contribution($values, $cids, $job, $tokens,$context);
+    if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens']) || array_key_exists('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
+			maf_tokens_total_this_year_contribution($values, $cids, $job, $tokens,$context, 0, 'maf_tokens.total_this_year_contribution_amount');
+		}
+    if (in_array('total_last_year_contribution_amount', $tokens['maf_tokens']) || array_key_exists('total_last_year_contribution_amount', $tokens['maf_tokens'])) {
+			maf_tokens_total_this_year_contribution($values, $cids, $job, $tokens,$context, -1, 'maf_tokens.total_last_year_contribution_amount');
+		}
+    if (in_array('total_this_year_contribution_deductible_amount', $tokens['maf_tokens']) || array_key_exists('total_this_year_contribution_deductible_amount', $tokens['maf_tokens'])) {
+			maf_tokens_total_this_year_deductible_contribution($values, $cids, $job, $tokens,$context, 0, 'maf_tokens.total_this_year_contribution_deductible_amount');
+		}
+    if (in_array('total_last_year_contribution_deductible_amount', $tokens['maf_tokens']) || array_key_exists('total_last_year_contribution_deductible_amount', $tokens['maf_tokens'])) {
+			maf_tokens_total_this_year_deductible_contribution($values, $cids, $job, $tokens,$context, -1, 'maf_tokens.total_last_year_contribution_deductible_amount');
 		}
     
     //token maf_tokens.country
-		if (in_array('country', $tokens['maf_tokens'])) {
+		if (in_array('country', $tokens['maf_tokens']) || array_key_exists('country', $tokens['maf_tokens'])) {
 			maf_tokens_country($values, $cids, $job, $tokens,$context);
 		}
     
@@ -128,11 +140,13 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
     // - maf_tokens.lastcontribution_amount
     // - maf_tokens.lastcontribution_date
     // - maf_tokens.lastcontribution_financial_type
-		if ((in_array('lastcontribution_amount', $tokens['maf_tokens'])) || (in_array('lastcontribution_date', $tokens['maf_tokens'])) || (in_array('lastcontribution_financial_type', $tokens['maf_tokens']))) {
+		if (in_array('lastcontribution_amount', $tokens['maf_tokens']) || in_array('lastcontribution_date', $tokens['maf_tokens']) || in_array('lastcontribution_financial_type', $tokens['maf_tokens']) || 
+        array_key_exists('lastcontribution_amount', $tokens['maf_tokens']) || array_key_exists('lastcontribution_date', $tokens['maf_tokens']) || array_key_exists('lastcontribution_financial_type', $tokens['maf_tokens'])) {
       maf_tokens_lastcontribution($values, $cids, $job, $tokens,$context);
 		}
     
-    if ((in_array('nextcontribution_kid15', $tokens['maf_tokens'])) || (in_array('nextcontribution_amount_krone', $tokens['maf_tokens'])) || (in_array('nextcontribution_amount_ore', $tokens['maf_tokens'])) || (in_array('nextcontribution_month', $tokens['maf_tokens']))) {
+    if (in_array('nextcontribution_kid15', $tokens['maf_tokens']) || in_array('nextcontribution_amount_krone', $tokens['maf_tokens']) || in_array('nextcontribution_amount_ore', $tokens['maf_tokens']) || in_array('nextcontribution_month', $tokens['maf_tokens']) ||
+            array_key_exists('nextcontribution_kid15', $tokens['maf_tokens']) || array_key_exists('nextcontribution_amount_krone', $tokens['maf_tokens']) || array_key_exists('nextcontribution_amount_ore', $tokens['maf_tokens']) || array_key_exists('nextcontribution_month', $tokens['maf_tokens'])) {
       maf_tokens_nextcontribution($values, $cids, $job, $tokens,$context);
     }
     
@@ -150,7 +164,15 @@ function maf_tokens_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
         in_array('pronoun_dinderes', $tokens['maf_tokens']) ||
         in_array('pronoun_dinderes_capital', $tokens['maf_tokens']) ||
         in_array('pronoun_dinederes', $tokens['maf_tokens']) ||
-        in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])
+        in_array('pronoun_dinederes_capital', $tokens['maf_tokens']) ||      
+        array_key_exists('pronoun_dudere', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dudere_capital', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_degdere', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_degdere_capital', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinderes', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinderes_capital', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinederes', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinederes_capital', $tokens['maf_tokens'])
         ) {
       maf_tokens_pronouns($values, $cids, $job, $tokens,$context);
     }
@@ -188,7 +210,15 @@ function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $c
         in_array('pronoun_dinderes', $tokens['maf_tokens']) ||
         in_array('pronoun_dinderes_capital', $tokens['maf_tokens']) ||
         in_array('pronoun_dinederes', $tokens['maf_tokens']) ||
-        in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])
+        in_array('pronoun_dinederes_capital', $tokens['maf_tokens']) ||      
+        array_key_exists('pronoun_dudere', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dudere_capital', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_degdere', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_degdere_capital', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinderes', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinderes_capital', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinederes', $tokens['maf_tokens']) ||
+        array_key_exists('pronoun_dinederes_capital', $tokens['maf_tokens'])
         ) {
       
       
@@ -197,54 +227,54 @@ function maf_tokens_pronouns(&$values, $cids, $job = null, $tokens = array(), $c
         $cid = $dao->id;
 				if (in_array($cid, $cids)) {
           if ($dao->contact_type == "Individual") {
-            if (in_array('pronoun_dudere', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dudere', $tokens['maf_tokens']) || array_key_exists('pronoun_dudere', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dudere'] = "du";
             }
-            if (in_array('pronoun_dudere_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dudere_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_dudere_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Du";
             }            
-            if (in_array('pronoun_degdere', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_degdere', $tokens['maf_tokens']) || array_key_exists('pronoun_degdere', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_degdere'] = "deg";
             }
-            if (in_array('pronoun_degdere_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_degdere_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_degdere_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_degdere_capital'] = "Deg";
             }
-            if (in_array('pronoun_dinderes', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinderes', $tokens['maf_tokens']) || array_key_exists('pronoun_dinderes', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinderes'] = "din";
             }
-            if (in_array('pronoun_dinderes_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinderes_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_dinderes_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinderes_capital'] = "Din";
             }
-            if (in_array('pronoun_dinederes', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinederes', $tokens['maf_tokens']) || array_key_exists('pronoun_dinederes', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinederes'] = "dine";
             }
-            if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinederes_capital'] = "Dine";
             }
             
           } else {
-            if (in_array('pronoun_dudere', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dudere', $tokens['maf_tokens']) || array_key_exists('pronoun_dudere', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dudere'] = "dere";
             }
-            if (in_array('pronoun_dudere_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dudere_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_dudere_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dudere_capital'] = "Dere";
             }
-            if (in_array('pronoun_degdere', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_degdere', $tokens['maf_tokens']) || array_key_exists('pronoun_degdere', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_degdere'] = "dere";
             }
-            if (in_array('pronoun_degdere_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_degdere_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_degdere_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_degdere_capital'] = "Dere";
             }
-            if (in_array('pronoun_dinderes', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinderes', $tokens['maf_tokens']) || array_key_exists('pronoun_dinderes', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinderes'] = "deres";
             }
-            if (in_array('pronoun_dinderes_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinderes_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_dinderes_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinderes_capital'] = "Deres";
             }
-            if (in_array('pronoun_dinederes', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinederes', $tokens['maf_tokens']) || array_key_exists('pronoun_dinederes', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinederes'] = "deres";
             }
-            if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
+            if (in_array('pronoun_dinederes_capital', $tokens['maf_tokens']) || array_key_exists('pronoun_dinederes_capital', $tokens['maf_tokens'])) {
               $values[$cid]['maf_tokens.pronoun_dinederes_capital'] = "Deres";
             }
           }
@@ -273,7 +303,7 @@ function maf_tokens_totalcontribution(&$values, $cids, $job = null, $tokens = ar
 			while ($dao->fetch()) {
 				$cid = $dao->contact_id;
 				if (in_array($cid, $cids)) {
-					if (in_array('total_contribution_amount', $tokens['maf_tokens'])) {
+					if (in_array('total_contribution_amount', $tokens['maf_tokens']) || array_key_exists('total_contribution_amount', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
 						$values[$cid]['maf_tokens.total_contribution_amount'] = _maf_tokens_money_format($amount);
 					}
@@ -287,7 +317,7 @@ function maf_tokens_totalcontribution(&$values, $cids, $job = null, $tokens = ar
  * Returns the value of tokens:
  * - maf_tokens.total_contribution_amount
  */
-function maf_tokens_total_this_year_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+function maf_tokens_total_this_year_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null, $offset, $token) {
   $contacts = implode(',', $cids);
 
 	if (!empty($tokens['maf_tokens'])) {		
@@ -297,14 +327,47 @@ function maf_tokens_total_this_year_contribution(&$values, $cids, $job = null, $
 				FROM civicrm_contribution as cc
 				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
 				AND cc.contact_id IN (".$contacts.")
-        AND YEAR(cc.receive_date) = YEAR(now())
+        AND YEAR(cc.receive_date) = (YEAR(now()) + %1)
         GROUP BY cc.contact_id
-			");
+			", array(
+        1 => array($offset, 'Integer')
+      ));
 			
 			while ($dao->fetch()) {
 				$cid = $dao->contact_id;
 				if (in_array($cid, $cids)) {
-					if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
+          $amount = (float) $dao->total_amount;
+          $values[$cid][$token] = _maf_tokens_money_format($amount);
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Returns the value of tokens:
+ * - maf_tokens.total_contribution_amount
+ */
+function maf_tokens_total_this_year_deductible_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null, $offset) {
+  $contacts = implode(',', $cids);
+
+	if (!empty($tokens['maf_tokens'])) {		
+		if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
+			$dao = &CRM_Core_DAO::executeQuery("
+				SELECT cc.*, (SUM(cc.total_amount) - SUM(cc.non_deductible_amount)) as total_amount
+				FROM civicrm_contribution as cc
+				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
+				AND cc.contact_id IN (".$contacts.")
+        AND YEAR(cc.receive_date) = (YEAR(now()) + %1)
+        GROUP BY cc.contact_id
+			", array(
+        1 => array($offset, 'Integer')
+      ));
+			
+			while ($dao->fetch()) {
+				$cid = $dao->contact_id;
+				if (in_array($cid, $cids)) {
+					if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens']) || array_key_exists('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
 						$values[$cid]['maf_tokens.total_this_year_contribution_amount'] = _maf_tokens_money_format($amount);
 					}
@@ -337,18 +400,18 @@ function maf_tokens_nextcontribution(&$values, $cids, $job = null, $tokens = arr
 			while ($dao->fetch()) {
 				$cid = $dao->contact_id;
 				if (in_array($cid, $cids)) {
-          if (in_array('nextcontribution_kid15', $tokens['maf_tokens'])) {
+          if (in_array('nextcontribution_kid15', $tokens['maf_tokens']) || array_key_exists('nextcontribution_kid15', $tokens['maf_tokens'])) {
 						$values[$cid]['maf_tokens.nextcontribution_kid15'] = $dao->kid_number;
 					}
-					if (in_array('nextcontribution_amount_krone', $tokens['maf_tokens'])) {
+					if (in_array('nextcontribution_amount_krone', $tokens['maf_tokens']) || array_key_exists('nextcontribution_amount_krone', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
 						$values[$cid]['maf_tokens.nextcontribution_amount_krone'] = _maf_tokens_moneykrone_format($amount);
 					}
-          if (in_array('nextcontribution_amount_ore', $tokens['maf_tokens'])) {
+          if (in_array('nextcontribution_amount_ore', $tokens['maf_tokens']) || array_key_exists('nextcontribution_amount_ore', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
 						$values[$cid]['maf_tokens.nextcontribution_amount_ore'] = _maf_tokens_moneyore_format($amount);
 					}
-					if (in_array('nextcontribution_month', $tokens['maf_tokens'])) {
+					if (in_array('nextcontribution_month', $tokens['maf_tokens']) || array_key_exists('nextcontribution_month', $tokens['maf_tokens'])) {
 						$date = new DateTime($dao->receive_date);
 						$values[$cid]['maf_tokens.nextcontribution_month'] = _maf_tokens_month_format($date);
 					}
@@ -381,15 +444,15 @@ function maf_tokens_lastcontribution(&$values, $cids, $job = null, $tokens = arr
 			while ($dao->fetch()) {
 				$cid = $dao->contact_id;
 				if (in_array($cid, $cids)) {
-					if (in_array('lastcontribution_amount', $tokens['maf_tokens'])) {
+					if (in_array('lastcontribution_amount', $tokens['maf_tokens']) || array_key_exists('lastcontribution_amount', $tokens['maf_tokens'])) {
 						$amount = (float) $dao->total_amount;
 						$values[$cid]['maf_tokens.lastcontribution_amount'] = _maf_tokens_money_format($amount);
 					}
-					if (in_array('lastcontribution_date', $tokens['maf_tokens'])) {
+					if (in_array('lastcontribution_date', $tokens['maf_tokens']) || array_key_exists('lastcontribution_date', $tokens['maf_tokens'])) {
 						$date = new DateTime($dao->receive_date);
 						$values[$cid]['maf_tokens.lastcontribution_date'] = _maf_tokens_date_format($date);
 					}
-					if (in_array('lastcontribution_financial_type', $tokens['maf_tokens'])) {
+					if (in_array('lastcontribution_financial_type', $tokens['maf_tokens']) || array_key_exists('lastcontribution_financial_type', $tokens['maf_tokens'])) {
 						$values[$cid]['maf_tokens.lastcontribution_financial_type'] = $dao->financial_type;
 					}
 				}
@@ -403,7 +466,7 @@ function maf_tokens_lastcontribution(&$values, $cids, $job = null, $tokens = arr
  */
 function maf_tokens_today(&$values, $cids, $job = null, $tokens = array(), $context = null) {
   if (!empty($tokens['maf_tokens'])) {
-		if (in_array('today', $tokens['maf_tokens'])) {
+		if (in_array('today', $tokens['maf_tokens']) || array_key_exists('today', $tokens['maf_tokens'])) {
 			$today = new DateTime();
 			foreach ($cids as $cid) {
 				$values[$cid]['maf_tokens.today'] = _maf_tokens_date_format($today);
