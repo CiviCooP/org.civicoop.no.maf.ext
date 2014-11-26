@@ -320,61 +320,51 @@ function maf_tokens_totalcontribution(&$values, $cids, $job = null, $tokens = ar
 function maf_tokens_total_this_year_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null, $offset, $token) {
   $contacts = implode(',', $cids);
 
-	if (!empty($tokens['maf_tokens'])) {		
-		if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
-			$dao = &CRM_Core_DAO::executeQuery("
-				SELECT cc.*, SUM(cc.total_amount) as total_amount
-				FROM civicrm_contribution as cc
-				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
-				AND cc.contact_id IN (".$contacts.")
-        AND YEAR(cc.receive_date) = (YEAR(now()) + %1)
-        GROUP BY cc.contact_id
-			", array(
-        1 => array($offset, 'Integer')
-      ));
-			
-			while ($dao->fetch()) {
-				$cid = $dao->contact_id;
-				if (in_array($cid, $cids)) {
-          $amount = (float) $dao->total_amount;
-          $values[$cid][$token] = _maf_tokens_money_format($amount);
-				}
-			}
-		}
-	}
+  $dao = &CRM_Core_DAO::executeQuery("
+    SELECT cc.*, SUM(cc.total_amount) as total_amount
+    FROM civicrm_contribution as cc
+    WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
+    AND cc.contact_id IN (".$contacts.")
+    AND YEAR(cc.receive_date) = (YEAR(now()) + %1)
+    GROUP BY cc.contact_id
+  ", array(
+    1 => array($offset, 'Integer')
+  ));
+
+  while ($dao->fetch()) {
+    $cid = $dao->contact_id;
+    if (in_array($cid, $cids)) {
+      $amount = (float) $dao->total_amount;
+      $values[$cid][$token] = _maf_tokens_money_format($amount);
+    }
+  }
 }
 
 /*
  * Returns the value of tokens:
  * - maf_tokens.total_contribution_amount
  */
-function maf_tokens_total_this_year_deductible_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null, $offset) {
+function maf_tokens_total_this_year_deductible_contribution(&$values, $cids, $job = null, $tokens = array(), $context = null, $offset, $token) {
   $contacts = implode(',', $cids);
 
-	if (!empty($tokens['maf_tokens'])) {		
-		if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
-			$dao = &CRM_Core_DAO::executeQuery("
-				SELECT cc.*, (SUM(cc.total_amount) - SUM(cc.non_deductible_amount)) as total_amount
-				FROM civicrm_contribution as cc
-				WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
-				AND cc.contact_id IN (".$contacts.")
-        AND YEAR(cc.receive_date) = (YEAR(now()) + %1)
-        GROUP BY cc.contact_id
-			", array(
-        1 => array($offset, 'Integer')
-      ));
-			
-			while ($dao->fetch()) {
-				$cid = $dao->contact_id;
-				if (in_array($cid, $cids)) {
-					if (in_array('total_this_year_contribution_amount', $tokens['maf_tokens']) || array_key_exists('total_this_year_contribution_amount', $tokens['maf_tokens'])) {
-						$amount = (float) $dao->total_amount;
-						$values[$cid]['maf_tokens.total_this_year_contribution_amount'] = _maf_tokens_money_format($amount);
-					}
-				}
-			}
-		}
-	}
+  $dao = &CRM_Core_DAO::executeQuery("
+    SELECT cc.*, (SUM(cc.total_amount) - SUM(cc.non_deductible_amount)) as total_amount
+    FROM civicrm_contribution as cc
+    WHERE cc.is_test = 0 AND cc.contribution_status_id = 1
+    AND cc.contact_id IN (".$contacts.")
+    AND YEAR(cc.receive_date) = (YEAR(now()) + %1)
+    GROUP BY cc.contact_id
+  ", array(
+    1 => array($offset, 'Integer')
+  ));
+
+  while ($dao->fetch()) {
+    $cid = $dao->contact_id;
+    if (in_array($cid, $cids)) {
+      $amount = (float) $dao->total_amount;
+      $values[$cid][$token] = _maf_tokens_money_format($amount);
+    }
+  }
 }
 
 /*
